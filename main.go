@@ -1,80 +1,79 @@
 package main
 
 import (
-	"log"
-	"os"
 	"strings"
 	"time"
 
 	"github.com/buger/goterm"
-	"golang.org/x/term"
+	"github.com/jbweber/jefftris/internal/terminal"
 )
 
-var jay = [2][3]string{{"", "", "\033[31mX\033[39m"}, {"\033[31mX\033[39m", "\033[31mX\033[39m", "\033[31mX\033[39m"}}
+//var jays = [][][]string{
+//	{{"", "", terminal.BACKGROUND_BLUE + "@" + terminal.BACKGROUND_DEFAULT}, {terminal.BACKGROUND_BLUE + "@" + terminal.BACKGROUND_DEFAULT, terminal.BACKGROUND_BLUE + "@" + terminal.BACKGROUND_DEFAULT, terminal.BACKGROUND_BLUE + "@" + terminal.BACKGROUND_DEFAULT}},
+//	{{terminal.BACKGROUND_BLUE + "@" + terminal.BACKGROUND_DEFAULT, terminal.BACKGROUND_BLUE + "@" + terminal.BACKGROUND_DEFAULT}, {"", terminal.BACKGROUND_BLUE + "@" + terminal.BACKGROUND_DEFAULT}, {"", terminal.BACKGROUND_BLUE + "@" + terminal.BACKGROUND_DEFAULT}},
+//	{{terminal.BACKGROUND_BLUE + "@" + terminal.BACKGROUND_DEFAULT, "", ""}, {terminal.BACKGROUND_BLUE + "@" + terminal.BACKGROUND_DEFAULT, terminal.BACKGROUND_BLUE + "@" + terminal.BACKGROUND_DEFAULT, terminal.BACKGROUND_BLUE + "@" + terminal.BACKGROUND_DEFAULT}},
+//	{{"", terminal.BACKGROUND_BLUE + "@" + terminal.BACKGROUND_DEFAULT}, {"", terminal.BACKGROUND_BLUE + "@" + terminal.BACKGROUND_DEFAULT}, {terminal.BACKGROUND_BLUE + "@" + terminal.BACKGROUND_DEFAULT, terminal.BACKGROUND_BLUE + "@" + terminal.BACKGROUND_DEFAULT}},
+//}
 
-var jays = [][][]string{
-	{{"", "", "\033[31mX\033[39m"}, {"\033[31mX\033[39m", "\033[31mX\033[39m", "\033[31mX\033[39m"}},
-	{{"\u001B[31mX\u001B[39m", "\u001B[31mX\u001B[39m"}, {"", "\033[31mX\033[39m"}, {"", "\033[31mX\033[39m"}},
-	{{"\033[31mX\033[39m", "", ""}, {"\033[31mX\033[39m", "\033[31mX\033[39m", "\033[31mX\033[39m"}},
-	{{"", "\u001B[31mX\u001B[39m"}, {"", "\u001B[31mX\u001B[39m"}, {"\u001B[31mX\u001B[39m", "\u001B[31mX\u001B[39m"}},
+var tees = [][][]string{
+	{{"", terminal.MAGENTA_BLOCK}, {terminal.MAGENTA_BLOCK, terminal.MAGENTA_BLOCK}, {"", terminal.MAGENTA_BLOCK}},
+	{{"", terminal.MAGENTA_BLOCK, ""}, {terminal.MAGENTA_BLOCK, terminal.MAGENTA_BLOCK, terminal.MAGENTA_BLOCK}},
+}
+
+var test = [][][]string{
+	//{{"X", "X", "X"}, {"X", "O", "O"}, {"Z", "O", "O"}, {"Z", "Z", "Z"}},
+	{{terminal.RED_BLOCK, terminal.YELLOW_BLOCK, terminal.YELLOW_BLOCK, terminal.BLUE_BLOCK}, {terminal.RED_BLOCK, terminal.YELLOW_BLOCK, terminal.YELLOW_BLOCK, terminal.BLUE_BLOCK}, {terminal.RED_BLOCK, terminal.RED_BLOCK, terminal.BLUE_BLOCK, terminal.BLUE_BLOCK}},
 }
 
 func main() {
-	if term.IsTerminal(int(os.Stdout.Fd())) {
-		width, height, err := term.GetSize(int(os.Stdout.Fd()))
-		if err != nil {
-			log.Fatalf("%s", err)
-		}
-
-		log.Printf("%d x %d", width, height)
-	} else {
-		log.Fatal("cannot determine terminal size")
-	}
-
 	width := goterm.Width()
 	height := goterm.Height()
 
+	j := 0
 	for i := 1; i < height-1; i++ {
-		drawBox(width, height, i)
+		drawBox(width, height, i, j, tees)
+		j++
+		if j >= len(tees) {
+			j = 0
+		}
 		time.Sleep(1 * time.Second)
 	}
 
 	time.Sleep(100 * time.Second)
 }
 
-func drawBox(width, height, loc int) {
+func drawBox(width, height, loc, j int, block [][][]string) {
 	goterm.MoveCursor(1, 1)
 	goterm.Clear()
 	goterm.Flush()
 
-	j := 0
 	for i := 1; i < height; i++ {
 		if i == height-1 {
 			goterm.MoveCursor(2, i)
-			goterm.Print(strings.Repeat("-", width-2))
-		} else {
-			goterm.MoveCursor(2, i)
-			goterm.Printf("|%d", i)
-			if i == loc {
-				goterm.MoveCursor(width/2, i)
-				//goterm.Print(jay) // strings.Repeat(goterm.Color("X", goterm.BLUE), 6)
-				drawLetter(width/2, i, j)
-			}
-			goterm.MoveCursor(width-1, i)
-			goterm.Print("|")
+			goterm.Print(strings.Repeat("=", width-2))
+
+			continue
 		}
+
+		goterm.MoveCursor(2, i)
+		goterm.Printf("%s||%d%s", terminal.FOREGROUND_CYAN, i, terminal.FOREGROUND_DEFAULT)
+		if i == loc {
+			goterm.MoveCursor(width/2, i)
+			//goterm.Print(jay) // strings.Repeat(goterm.Color("X", goterm.BLUE), 6)
+			drawLetter(width/2, i, j, block)
+		}
+		goterm.MoveCursor(width-1, i)
+		goterm.Print("||")
 	}
 
 	goterm.Flush()
 }
 
-func drawLetter(width, height, j int) {
-	goterm.Printf("XXX%dX", j)
-
-	for x := 0; x < len(jays[j]); x++ {
-		for y := 0; y < len(jays[j][x]); y++ {
+func drawLetter(width, height, j int, block [][][]string) {
+	for x := 0; x < len(block[j]); x++ {
+		for y := 0; y < len(block[j][x]); y++ {
 			goterm.MoveCursor(width+x, height+y)
-			goterm.Print(jays[j][x][y])
+			goterm.Print(block[j][x][y])
 		}
 	}
 }
