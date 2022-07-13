@@ -1,0 +1,4 @@
+# See golang.org/issue/9281.
+*.go -text
+go.mod -text
+go.sum -text
